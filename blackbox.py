@@ -2,28 +2,16 @@ import os
 from datetime import datetime
 import pytz
 from pytz import timezone
-from dateutil.relativedelta import relativedelta
-import numpy as np
-from netCDF4 import Dataset
+try:
 
-'''
-from Scientific.IO import NetCDF
-nc = NetCDF.NetCDFFile(“ test.nc”, 'w')
-nc.createDimension('recNum', None)
-tmpk = nc.createVariable('temperature', Numeric.Float, ('recNum',) )
-tmpk.long_name = 'Temperature'
-tmpk.units = 'Kelvin'
-nc.close()
+	import numpy as np
+except:
+	raise Exception("numpy is required")
+try:		
+	from netCDF4 import Dataset
+except:
+	raise Exception("netCDF4 is required")		
 
-from Scientific.IO import NetCDF
-nc = NetCDF.NetCDFFile(“ test.nc”, 'a')
-recNum = nc.dimensions[“recNum”]
-tmpk = nc.variables[“ temperature”]
-tmpk[0] = 273.01
-tmpk[1] = 300.00
-nc.close()
-
-'''
 
 
 class nodc_var(object):
