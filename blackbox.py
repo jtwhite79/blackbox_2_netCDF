@@ -94,8 +94,8 @@ class pressure(object):
 		latitude_var.min = self.valid_latitude[0]
 		latitude_var.max = self.valid_latitude[1]		
 		latitude_var.ancillary_variables = ''
-		latitude_var.comment = "latitude 0 equals equator"
-		latitude_var = self.latitude
+		latitude_var.comment = "latitude 0 equals equator"		
+		latitude_var[:] = self.latitude
 		return latitude_var
 
 
@@ -149,63 +149,53 @@ class pressure(object):
 			in_filename = raw_input("level troll filename\n")
 		self.in_filename = in_filename		
 
-		is_baro = raw_input("is this a barometric correction dataset? (y/n)\n").lower()
-		while is_baro not in ['y','n']:
-			is_baro = raw_input("is this a barometric correction dataset? (y/n)\n").lower()
-		if is_baro == 'y':
-			self.is_baro = True
+		baro = None
+		is_baro = True
+		while baro not in ['y','n']:
+			baro = raw_input("is this a barometric correction dataset? (y/n)\n").lower()
+		if baro == 'y':
+			is_baro = True
 		else:
-			self.is_baro = False							
+			is_baro = False							
+		self.is_baro = baro
 
-		pressure_units = raw_input("what are the pressure units? ("+','.join(self.valid_pressure_units)+")?\n").lower()
+		pressure_units = ''
 		while pressure_units not in self.valid_pressure_units:
 			pressure_units = raw_input("what are the pressure units? ("+','.join(self.valid_pressure_units)+")?\n").lower()
 		self.pressure_units = pressure_units
 
 		latitude = self.fill_value
-		while not self.inrange(latitude,self.valid_latitude):
-			latitude = raw_input("what is the latitude (DD) where these data were collected?\n")			
-			try:
-				latitude = np.float32(latitude)
-			except:
-				while True:				
-					latitude = raw_input("what is the latitude (DD) where these data were collected?\n")	
-					try:
-						latitude = np.float32(latitude)
-						break
-					except:
-						pass	
+		while not self.inrange(latitude,self.valid_latitude):	
+			while True:				
+				latitude = raw_input("what is the latitude (DD) where these data were collected?\n")	
+				try:
+					latitude = np.float32(latitude)
+					break
+				except:
+					pass	
 		self.latitude = latitude
 
 
 		longitude = self.fill_value
-		while not self.inrange(longitude,self.valid_longitude):
-			longitude = raw_input("what is the longitude (DD) where these data were collected?\n")	
-			try:
-				longitude = np.float32(longitude)
-			except:
-				while True:				
-					longitude = raw_input("what is the longitude (DD) where these data were collected?\n")	
-					try:
-						longitude = np.float32(longitude)
-						break
-					except:
-						pass	
+		while not self.inrange(longitude,self.valid_longitude):	
+			while True:				
+				longitude = raw_input("what is the longitude (DD) where these data were collected?\n")	
+				try:
+					longitude = np.float32(longitude)
+					break
+				except:
+					pass	
 		self.longitude = longitude
 
 		z = self.fill_value
-		while not self.inrange(z,self.valid_z):
-			z = raw_input("what is the altitude of the sensor?\n")	
-			try:
-				z = np.float32(z)
-			except:
-				while True:				
-					z = raw_input("what is the altitude of the sensor?\n")	
-					try:
-						z = np.float32(z)
-						break
-					except:
-						pass	
+		while not self.inrange(z,self.valid_z):	
+			while True:				
+				z = raw_input("what is the altitude of the sensor?\n")	
+				try:
+					z = np.float32(z)
+					break
+				except:
+					pass	
 		self.z = z
 
 		z_units = raw_input("what are the z units (" +','.join(self.valid_z_units)+ ")\n")
@@ -213,12 +203,9 @@ class pressure(object):
 			z_units = raw_input("what are the z units (" +','.join(self.valid_z_units)+ ")\n")
 		self.z_units = z_units			
 
-		salinity = self.fill_value
-		while not self.inrange(salinity,self.valid_salinity):
-			salinity = raw_input("what is the salinity (ppm or mg/l) where these data were collected?\n")	
-			try:
-				salinity = np.float32(salinity)
-			except:
+		if not is_baro:
+			salinity = self.fill_value
+			while not self.inrange(salinity,self.valid_salinity):	
 				while True:				
 					salinity = raw_input("what is the salinity (ppm or mg/l) where these data were collected?\n")	
 					try:
@@ -226,7 +213,7 @@ class pressure(object):
 						break
 					except:
 						pass	
-		self.salinity_ppm = salinity
+			self.salinity_ppm = salinity
 
 		out_filename = raw_input("what is the output netcdf file name? (enter to use level troll filename with \'.nc\' suffix")		
 		if out_filename == '':			
@@ -244,7 +231,6 @@ class pressure(object):
 					raise Exception("unable to remove existing netcdf file: "+out_filename)					
 		
 		self.out_filename = out_filename
-
 
 
 	def inrange(self,val,limits):
@@ -283,8 +269,7 @@ class leveltroll(pressure):
 
 		self.utc_second_data = data["seconds"] + self.offset_seconds
 		self.pressure_data = data["pressure"]
-		self.pressure_data[np.where(np.logical_or(self.pressure_data<self.valid_pressure,\
-			self.pressure_data[0]>self.valid_pressure[1]))] = self.fill_value
+		
 
 	def read_header(self,f):
 		''' read the header from the level troll ASCII file
@@ -334,21 +319,28 @@ class leveltroll(pressure):
 
 
 if __name__ == "__main__":
-		
+	
+	#--create an instance	
 	lt = leveltroll()		
 	
 	#--for testing
-	# lt.in_filename = os.path.join("benchmark","data.csv")
-	# lt.out_filename = os.path.join("benchmark","data.csv.nc")
-	# if os.path.exists(lt.out_filename):
-	# 	os.remove(lt.out_filename)
-	# lt.is_baro = True
-	# lt.pressure_units = "psi"
-	# lt.z_units = "meters"
-	# lt.longitude = np.float32(0.0)
-	# lt.latitude = np.float(0.0)
-	# lt.salinity_ppm = np.float32(0.0)
-	# lt.z = np.float32(0.0)
-	lt.get_user_input()
+	lt.in_filename = os.path.join("benchmark","data.csv")
+	lt.out_filename = os.path.join("benchmark","data.csv.nc")
+	if os.path.exists(lt.out_filename):
+		os.remove(lt.out_filename)
+	lt.is_baro = True
+	lt.pressure_units = "psi"
+	lt.z_units = "meters"
+	lt.longitude = np.float32(0.0)
+	lt.latitude = np.float(0.0)
+	lt.salinity_ppm = np.float32(0.0)
+	lt.z = np.float32(0.0)
+	
+	#--get input
+	#lt.get_user_input()
+	
+	#--read the ASCII level troll file
 	lt.read()	
+
+	#--write the netcdf file
 	lt.write()
