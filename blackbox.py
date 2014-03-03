@@ -42,6 +42,12 @@ class pressure(object):
 		self.data_start = None
 		self.valid_pressure_units = ["psi","pascals","atm"]
 		self.valid_z_units = ["meters","feet"]
+		self.valid_latitude = (np.float32(-90),np.float32(90))
+		self.valid_longitude = (np.float32(-180),np.float32(180))
+		self.valid_z = (np.float32(-10000),np.float32(10000))
+		self.valid_salinity = (np.float32(0.0),np.float32(40000))
+		self.valid_pressure = (np.float32(-10000),np.float32(10000))
+
 		self.fill_value = np.float32(-1.0e+10)
 
 	@property	
@@ -71,8 +77,8 @@ class pressure(object):
 		longitude_var.standard_name = "longitude"
 		longitude_var.units = "degrees east"
 		longitude_var.axis = 'X'
-		longitude_var.min = np.float32(-180.0)
-		longitude_var.max = np.float32(180.0)		
+		longitude_var.min = self.valid_longitude[0]
+		longitude_var.max = self.valid_longitude[1]		
 		longitude_var.ancillary_variables = ''
 		longitude_var.comment = "longitude 0 equals prime meridian"
 		longitude_var[:] = self.longitude
@@ -85,8 +91,8 @@ class pressure(object):
 		latitude_var.standard_name = "latitude"
 		latitude_var.units = "degrees north"
 		latitude_var.axis = 'Y'
-		latitude_var.min = np.float32(-90.0)
-		latitude_var.max = np.float32(90.0)		
+		latitude_var.min = self.valid_latitude[0]
+		latitude_var.max = self.valid_latitude[1]		
 		latitude_var.ancillary_variables = ''
 		latitude_var.comment = "latitude 0 equals equator"
 		latitude_var = self.latitude
@@ -99,8 +105,8 @@ class pressure(object):
 		z_var.standard_name = "altitude"	
 		z_var.units = self.z_units
 		z_var.axis = 'Z'
-		z_var.min = np.float32(-11000.0)
-		z_var.max = np.float32(9000.0)		
+		z_var.min = self.valid_z[0]
+		z_var.max = self.valid_z[1]		
 		z_var.ancillary_variables = ''
 		z_var.comment = "altitude above NAVD88"
 		z_var[:] = self.z
@@ -115,8 +121,8 @@ class pressure(object):
 		pressure_var.units = self.pressure_units
 		pressure_var.scale_factor = np.float32(1.0)
 		pressure_var.add_offset = np.float32(0.0)		
-		pressure_var.min = np.float32(-10000.0)
-		pressure_var.max = np.float32(10000.0)		
+		pressure_var.min = self.valid_pressure[0]
+		pressure_var.max = self.valid_pressure[1]		
 		pressure_var.ancillary_variables = ''
 		pressure_var.coordinates = "time latitude longitude z"
 		pressure_var[:] = self.pressure_data
@@ -156,43 +162,50 @@ class pressure(object):
 			pressure_units = raw_input("what are the pressure units? ("+','.join(self.valid_pressure_units)+")?\n").lower()
 		self.pressure_units = pressure_units
 
-		latitude = raw_input("what is the latitude (DD) where these data were collected?\n")	
-		try:
-			latitude = np.float32(latitude)
-		except:
-			while True:				
-				latitude = raw_input("what is the latitude (DD) where these data were collected?\n")	
-				try:
-					latitude = np.float32(latitude)
-					break
-				except:
-					pass					
+		latitude = self.fill_value
+		while not self.inrange(latitude,self.valid_latitude):
+			latitude = raw_input("what is the latitude (DD) where these data were collected?\n")			
+			try:
+				latitude = np.float32(latitude)
+			except:
+				while True:				
+					latitude = raw_input("what is the latitude (DD) where these data were collected?\n")	
+					try:
+						latitude = np.float32(latitude)
+						break
+					except:
+						pass	
 		self.latitude = latitude
 
-		longitude = raw_input("what is the longitude (DD) where these data were collected?\n")	
-		try:
-			longitude = np.float32(longitude)
-		except:
-			while True:				
-				longitude = raw_input("what is the longitude (DD) where these data were collected?\n")	
-				try:
-					longitude = np.float32(longitude)
-					break
-				except:
-					pass	
+
+		longitude = self.fill_value
+		while not self.inrange(longitude,self.valid_longitude):
+			longitude = raw_input("what is the longitude (DD) where these data were collected?\n")	
+			try:
+				longitude = np.float32(longitude)
+			except:
+				while True:				
+					longitude = raw_input("what is the longitude (DD) where these data were collected?\n")	
+					try:
+						longitude = np.float32(longitude)
+						break
+					except:
+						pass	
 		self.longitude = longitude
 
-		z = raw_input("what is the altitude of the sensor?\n")	
-		try:
-			z = np.float32(z)
-		except:
-			while True:				
-				z = raw_input("what is the altitude of the sensor?\n")	
-				try:
-					z = np.float32(z)
-					break
-				except:
-					pass	
+		z = self.fill_value
+		while not self.inrange(z,self.valid_z):
+			z = raw_input("what is the altitude of the sensor?\n")	
+			try:
+				z = np.float32(z)
+			except:
+				while True:				
+					z = raw_input("what is the altitude of the sensor?\n")	
+					try:
+						z = np.float32(z)
+						break
+					except:
+						pass	
 		self.z = z
 
 		z_units = raw_input("what are the z units (" +','.join(self.valid_z_units)+ ")\n")
@@ -200,18 +213,19 @@ class pressure(object):
 			z_units = raw_input("what are the z units (" +','.join(self.valid_z_units)+ ")\n")
 		self.z_units = z_units			
 
-
-		salinity = raw_input("what is the salinity (ppm or mg/l) where these data were collected?\n")	
-		try:
-			salinity = np.float32(salinity)
-		except:
-			while True:				
-				salinity = raw_input("what is the salinity (ppm or mg/l) where these data were collected?\n")	
-				try:
-					salinity = np.float32(salinity)
-					break
-				except:
-					pass	
+		salinity = self.fill_value
+		while not self.inrange(salinity,self.valid_salinity):
+			salinity = raw_input("what is the salinity (ppm or mg/l) where these data were collected?\n")	
+			try:
+				salinity = np.float32(salinity)
+			except:
+				while True:				
+					salinity = raw_input("what is the salinity (ppm or mg/l) where these data were collected?\n")	
+					try:
+						salinity = np.float32(salinity)
+						break
+					except:
+						pass	
 		self.salinity_ppm = salinity
 
 		out_filename = raw_input("what is the output netcdf file name? (enter to use level troll filename with \'.nc\' suffix")		
@@ -230,6 +244,14 @@ class pressure(object):
 					raise Exception("unable to remove existing netcdf file: "+out_filename)					
 		
 		self.out_filename = out_filename
+
+
+
+	def inrange(self,val,limits):
+		if val >= limits[0] and val <= limits[1]:
+			return True
+		else:
+			return False
 
 
 	def read(self):
@@ -258,9 +280,11 @@ class leveltroll(pressure):
 		self.data_start = self.read_datetime(f)
 		data = np.genfromtxt(f,dtype=self.numpy_dtype,delimiter=',',usecols=[1,2])		
 		f.close()
+
 		self.utc_second_data = data["seconds"] + self.offset_seconds
 		self.pressure_data = data["pressure"]
-		
+		self.pressure_data[np.where(np.logical_or(self.pressure_data<self.valid_pressure,\
+			self.pressure_data[0]>self.valid_pressure[1]))] = self.fill_value
 
 	def read_header(self,f):
 		''' read the header from the level troll ASCII file
