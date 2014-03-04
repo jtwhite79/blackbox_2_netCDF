@@ -36,7 +36,7 @@ class pressure(object):
 		self.longitude = None
 		self.z = None
 		self.salinity_ppm = -1.0e+10
-		self.utc_second_data = None
+		self.utc_millisecond_data = None
 		self.pressure_data = None
 		self.epoch_start = datetime(year=1970,month=1,day=1,tzinfo=pytz.utc)
 		self.data_start = None
@@ -67,7 +67,7 @@ class pressure(object):
 		time_var.axis = 't'
 		time_var.ancillary_variables = ''
 		time_var.comment = ''
-		time_var[:] = self.utc_second_data
+		time_var[:] = self.utc_millisecond_data
 		return time_var
 
 
@@ -267,7 +267,7 @@ class leveltroll(pressure):
 		data = np.genfromtxt(f,dtype=self.numpy_dtype,delimiter=',',usecols=[1,2])		
 		f.close()
 
-		self.utc_second_data = data["seconds"] + self.offset_seconds
+		self.utc_millisecond_data = (data["seconds"] + self.offset_seconds) * 1000.0
 		self.pressure_data = data["pressure"]
 		
 
@@ -324,8 +324,8 @@ if __name__ == "__main__":
 	lt = leveltroll()		
 	
 	#--for testing
-	lt.in_filename = os.path.join("benchmark","data.csv")
-	lt.out_filename = os.path.join("benchmark","data.csv.nc")
+	lt.in_filename = os.path.join("benchmark","baro.csv")
+	lt.out_filename = os.path.join("benchmark","baro.csv.nc")
 	if os.path.exists(lt.out_filename):
 		os.remove(lt.out_filename)
 	lt.is_baro = True
