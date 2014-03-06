@@ -54,8 +54,8 @@ class pressure(object):
 	def offset_seconds(self):
 		'''offsets seconds from specified epoch using UTC time
 		'''		
-		offset = self.data_start - self.epoch_start				
-		return offset.seconds
+		offset = self.data_start - self.epoch_start			
+		return offset.total_seconds()
 
 
 	def time_var(self,ds):
@@ -133,7 +133,8 @@ class pressure(object):
 		assert not os.path.exists(self.out_filename),"out_filename already exists"
 		#--create variables and assign data
 		ds = netCDF4.Dataset(self.out_filename,'w',format="NETCDF4")
-		time_dimen = ds.createDimension("time",len(self.pressure_data))		
+		time_dimen = ds.createDimension("time",len(self.pressure_data))	
+		print len(self.pressure_data)	
 		time_var = self.time_var(ds)
 		latitude_var = self.latitude_var(ds)
 		longitude_var = self.longitude_var(ds)
@@ -266,8 +267,10 @@ class leveltroll(pressure):
 		self.data_start = self.read_datetime(f)
 		data = np.genfromtxt(f,dtype=self.numpy_dtype,delimiter=',',usecols=[1,2])		
 		f.close()
-
-		self.utc_millisecond_data = (data["seconds"] + self.offset_seconds) * 1000.0
+		
+		long_seconds = np.int64(data["seconds"])
+		self.utc_millisecond_data = (long_seconds + np.int64(self.offset_seconds)) * 1000
+		#print self.utc_millisecond_data[0],self.utc_millisecond_data[1]
 		self.pressure_data = data["pressure"]
 		
 
