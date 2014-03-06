@@ -40,6 +40,8 @@ class pressure(object):
 		self.pressure_data = None
 		self.epoch_start = datetime(year=1970,month=1,day=1,tzinfo=pytz.utc)
 		self.data_start = None
+		self.timezone_string = None
+
 		self.valid_pressure_units = ["psi","pascals","atm"]
 		self.valid_z_units = ["meters","feet"]
 		self.valid_latitude = (np.float32(-90),np.float32(90))
@@ -62,11 +64,11 @@ class pressure(object):
 		time_var = ds.createVariable("time","u8",("time",))
 		time_var.long_name = ''
 		time_var.standard_name = "time"
-		time_var.units = "milliseconds since "+self.epoch_start.strftime("%Y-%m-%d %H:%M:%S")
+		time_var.units = "milliseconds since "+self.epoch_start.strftime("%Y-%m-%d %H:%M:%S")+" in UTC"
 		time_var.calendar = "gregorian"
 		time_var.axis = 't'
-		time_var.ancillary_variables = ''
-		time_var.comment = ''
+		time_var.ancillary_variables = ''		
+		time_var.comment = "Original time zone: "+str(self.timezone_string)
 		time_var[:] = self.utc_millisecond_data
 		return time_var
 
@@ -100,7 +102,7 @@ class pressure(object):
 
 
 	def z_var(self,ds):	
-		z_var = ds.createVariable("z","f4",fill_value=self.fill_value)
+		z_var = ds.createVariable("altitude","f4",fill_value=self.fill_value)
 		z_var.long_name = "altitude of sensor"
 		z_var.standard_name = "altitude"	
 		z_var.units = self.z_units
@@ -141,6 +143,8 @@ class pressure(object):
 		z_var = self.z_var(ds)
 		pressure_var = self.pressure_var(ds)
 		ds.salinity_ppm = np.float32(self.salinity_ppm)		
+		ds.time_zone = "UTC"
+		ds.readme = "file created by "+sys.argv[0]+" on "+str(datetime.now())+" from source file "+self.in_filename
 		
 
 	def get_user_input(self):		
@@ -253,8 +257,7 @@ class leveltroll(pressure):
 	def __init__(self):
 		self.numpy_dtype = np.dtype([("seconds",np.float32),("pressure",np.float32)])
 		self.record_start_marker = "date and time,seconds"
-		self.timezone_marker = "time zone"
-		self.timezone_string = None
+		self.timezone_marker = "time zone"		
 		super(leveltroll,self).__init__()
 
 
