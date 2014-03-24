@@ -61,7 +61,7 @@ class pressure(object):
 
 
 	def time_var(self,ds):
-		time_var = ds.createVariable("time","u8",("time",))
+		time_var = ds.createVariable("time","u8",("time",),fill_value=np.int64(1.0e+10))
 		time_var.long_name = ''
 		time_var.standard_name = "time"
 		time_var.units = "milliseconds since "+self.epoch_start.strftime("%Y-%m-%d %H:%M:%S")+" in UTC"
